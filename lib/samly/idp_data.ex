@@ -13,6 +13,7 @@ defmodule Samly.IdpData do
   defstruct id: "",
             sp_id: "",
             base_url: nil,
+            custom_recipient_url: nil,
             metadata_file: nil,
             metadata: nil,
             pre_session_create_pipeline: nil,
@@ -41,6 +42,7 @@ defmodule Samly.IdpData do
           id: binary(),
           sp_id: binary(),
           base_url: nil | binary(),
+          custom_recipient_url: nil | binary(),
           metadata_file: nil | binary(),
           metadata: nil | binary(),
           pre_session_create_pipeline: nil | module(),
@@ -115,6 +117,7 @@ defmodule Samly.IdpData do
     %IdpData{idp_data | id: id, sp_id: sp_id, base_url: Map.get(opts_map, :base_url)}
     |> set_metadata(opts_map)
     |> set_pipeline(opts_map)
+    |> set_custom_recipient_url(opts_map)
     |> set_allowed_target_urls(opts_map)
     |> set_boolean_attr(opts_map, :use_redirect_for_req)
     |> set_boolean_attr(opts_map, :sign_requests)
@@ -201,6 +204,17 @@ defmodule Samly.IdpData do
   defp set_pipeline(%IdpData{} = idp_data, %{} = opts_map) do
     pipeline = Map.get(opts_map, :pre_session_create_pipeline)
     %IdpData{idp_data | pre_session_create_pipeline: pipeline}
+  end
+
+  @spec set_custom_recipient_url(%IdpData{}, map()) :: %IdpData{}
+  defp set_custom_recipient_url(%IdpData{} = idp_data, %{} = opts_map) do
+    consume_url =
+      case Map.get(opts_map, :custom_recipient_url, nil) do
+        nil -> nil
+        url -> String.to_charlist(url)
+      end
+
+    %IdpData{idp_data | custom_recipient_url: consume_url}
   end
 
   defp set_allowed_target_urls(%IdpData{} = idp_data, %{} = opts_map) do
@@ -358,7 +372,7 @@ defmodule Samly.IdpData do
       idp_signs_assertions: idp_data.signed_assertion_in_resp,
       trusted_fingerprints: idp_data.fingerprints,
       metadata_uri: Helper.get_metadata_uri(idp_data.base_url, path_segment_idp_id),
-      consume_uri: Helper.get_consume_uri(idp_data.base_url, path_segment_idp_id),
+      consume_uri: idp_data.custom_recipient_url || Helper.get_consume_uri(idp_data.base_url, path_segment_idp_id),
       logout_uri: Helper.get_logout_uri(idp_data.base_url, path_segment_idp_id),
       entity_id: sp_entity_id
     )
