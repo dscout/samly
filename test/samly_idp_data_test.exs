@@ -165,6 +165,18 @@ defmodule SamlyIdpDataTest do
     assert idp_data.valid?
   end
 
+  test "valid-idp-config-12", %{sps: sps} do
+    idp_config = Map.put(@idp_config1, :custom_recipient_url, nil)
+    %IdpData{} = idp_data = IdpData.load_provider(idp_config, sps)
+    assert idp_data.valid?
+    refute idp_data.custom_recipient_url
+
+    idp_config = Map.put(idp_config, :custom_recipient_url, "custom-recipient-url")
+    %IdpData{} = idp_data = IdpData.load_provider(idp_config, sps)
+    assert idp_data.valid?
+    assert idp_data.custom_recipient_url == ~c"custom-recipient-url"
+  end
+
   test "url-test-1", %{sps: sps} do
     idp_config = %{@idp_config1 | metadata_file: "test/data/shibboleth_idp_metadata.xml"}
     %IdpData{} = idp_data = IdpData.load_provider(idp_config, sps)

@@ -61,19 +61,19 @@ defmodule Samly.RouterUtil do
 
         base_url = URI.to_string(uri)
         idp_id_from = Application.get_env(:samly, :idp_id_from)
+        %IdpData{id: idp_id} = idp_data = conn.private[:samly_idp]
 
         path_segment_idp_id =
           if idp_id_from == :subdomain do
             nil
           else
-            %IdpData{id: idp_id} = conn.private[:samly_idp]
             idp_id
           end
 
         Esaml.esaml_sp(
           sp,
           metadata_uri: Helper.get_metadata_uri(base_url, path_segment_idp_id),
-          consume_uri: Helper.get_consume_uri(base_url, path_segment_idp_id),
+          consume_uri: idp_data.custom_recipient_url || Helper.get_consume_uri(base_url, path_segment_idp_id),
           logout_uri: Helper.get_logout_uri(base_url, path_segment_idp_id)
         )
 

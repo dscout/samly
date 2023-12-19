@@ -304,6 +304,7 @@ defmodule MySamlyPipeline do
   alias Samly.{Assertion}
 
   plug :compute_attributes
+  plug :put_assertion_key
   plug :jit_provision_user
 
   def compute_attributes(conn, _opts) do
@@ -328,6 +329,16 @@ defmodule MySamlyPipeline do
     # |>  halt()
   end
 
+  def put_assertion_key(conn, _opts) do
+    %{idp_id: idp_id, subject: subject} = conn.private[:samly_assertion]
+    # By default Samly will set this as a tuple without the need for a customized pipeline.
+    assertion_key = {idp_id, subject.name}
+    # In the event your session serializer requires valid JSON, you can set
+    # this value as a string. Ex.
+    # assertion_key = "#{idp_id}_#{subject.name}"
+    put_session(conn, "samly_assertion_key", assertion_key)
+  end
+
   def jit_provision_user(conn, _opts) do
     # your user creation here ...
     conn
@@ -343,7 +354,7 @@ config :samly, Samly.Provider,
     %{
       # ...
       pre_session_create_pipeline: MySamlyPipeline,
-      # ...    
+      # ...
     }
   ]
 ```
