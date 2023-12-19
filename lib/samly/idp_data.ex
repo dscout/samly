@@ -209,7 +209,7 @@ defmodule Samly.IdpData do
   @spec set_custom_recipient_url(%IdpData{}, map()) :: %IdpData{}
   defp set_custom_recipient_url(%IdpData{} = idp_data, %{} = opts_map) do
     consume_url =
-      case Map.get(opts_map, :custom_recipient_url, nil) do
+      case Map.get(opts_map, :custom_recipient_url) do
         nil -> nil
         url -> String.to_charlist(url)
       end
