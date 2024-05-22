@@ -24,6 +24,7 @@ defmodule Samly.IdpData do
             signed_envelopes_in_resp: true,
             allow_idp_initiated_flow: false,
             allowed_target_urls: [],
+            debug_mode: false,
             entity_id: "",
             signed_requests: "",
             certs: [],
@@ -52,6 +53,7 @@ defmodule Samly.IdpData do
           signed_envelopes_in_resp: boolean(),
           allow_idp_initiated_flow: boolean(),
           allowed_target_urls: nil | [binary()],
+          debug_mode: boolean(),
           entity_id: binary(),
           signed_requests: binary(),
           certs: certs(),
@@ -61,8 +63,8 @@ defmodule Samly.IdpData do
           slo_post_url: url(),
           nameid_format: nameid_format(),
           fingerprints: [binary()],
-          esaml_idp_rec: :esaml_idp_metadata,
-          esaml_sp_rec: :esaml_sp,
+          esaml_idp_rec: :esaml.idp_metadata(),
+          esaml_sp_rec: :esaml.sp(),
           valid?: boolean()
         }
 
@@ -123,6 +125,7 @@ defmodule Samly.IdpData do
     |> set_boolean_attr(opts_map, :signed_assertion_in_resp)
     |> set_boolean_attr(opts_map, :signed_envelopes_in_resp)
     |> set_boolean_attr(opts_map, :allow_idp_initiated_flow)
+    |> set_boolean_attr(opts_map, :debug_mode)
   end
 
   @spec load_metadata(%IdpData{}) :: %IdpData{}
@@ -180,7 +183,7 @@ defmodule Samly.IdpData do
   @spec verify_slo_url(%IdpData{}) :: %IdpData{}
   defp verify_slo_url(%IdpData{} = idp_data) do
     if idp_data.valid? && idp_data.slo_redirect_url == nil && idp_data.slo_post_url == nil do
-      Logger.warn("[Samly] SLO Endpoint missing in [#{inspect(idp_data.metadata_file)}]")
+      Logger.warning("[Samly] SLO Endpoint missing in [#{inspect(idp_data.metadata_file)}]")
     end
 
     idp_data
@@ -235,22 +238,22 @@ defmodule Samly.IdpData do
           to_charlist(format)
 
         :email ->
-          'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+          ~c"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 
         :x509 ->
-          'urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName'
+          ~c"urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName"
 
         :windows ->
-          'urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName'
+          ~c"urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName"
 
         :krb ->
-          'urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos'
+          ~c"urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos"
 
         :persistent ->
-          'urn:oasis:names:tc:SAML:2.0:nameid-format:persistent'
+          ~c"urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
 
         :transient ->
-          'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'
+          ~c"urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
 
         invalid_nameid_format ->
           Logger.error(
